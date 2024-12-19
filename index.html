@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHT Treatment Determination</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            color: #338BA8;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin: 10px 0 5px;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #338BA8;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #2A6E85;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: left;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WHT Treatment Determination</h1>
+        
+        <label for="category">Select Category:</label>
+        <select id="category" onchange="handleCategoryChange()">
+            <option value="">--Select--</option>
+            <option value="Royalties">Royalties</option>
+            <option value="Services">Services</option>
+        </select>
+
+        <label for="country">Select Country:</label>
+        <select id="country">
+            <option value="">--Select--</option>
+        </select>
+
+        <div id="natureServicesDiv" style="display: none;">
+            <label for="natureOfServices">Nature of Services:</label>
+            <select id="natureOfServices">
+                <option value="">--Select--</option>
+                <option value="1">Participation in organizations, conferences, seminars or exhibitions</option>
+                <option value="2">Training</option>
+                <option value="3">Transporting, shipping and insurance of goods</option>
+                <option value="4">Air tickets and accommodation expenses abroad</option>
+                <option value="5">Board meetings</option>
+                <option value="6">Reinsurance payments</option>
+                <option value="7">Any services related to an activity or property outside Oman</option>
+                <option value="8">Not in the list</option>
+            </select>
+        </div>
+
+        <button onclick="determineWHT()">Submit</button>
+
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        const countries = [
+            "Algeria", "Canada", "China", "Croatia", "France", "Hungary", "Iran", "Japan", "Korea (R.OK)", 
+            "Lebanon", "Mauritius", "Morocco", "Netherlands", "Oman", "Portugal", "Qatar", "Russia", 
+            "Singapore", "Slovak", "South Africa", "Spain", "Sudan", "Syria", "Thailand", "Tunisia", 
+            "Turkey", "UK", "Uzbekistan", "Yemen", "Not in the list"
+        ];
+
+        const royaltyRates = {
+            "France": 7, "Tunisia": 5, "UK": 8, "Mauritius": 0, "South Africa": 8, "Singapore": 8,
+            "Canada": 0, "Korea (R.OK)": 8, "Netherlands": 8, "Spain": 8, "Portugal": 8,
+            "Switzerland": 8, "Hungary": 8, "Qatar": 8
+        };
+
+        const serviceRates = {
+            "France": 0, "Tunisia": 0, "UK": 0, "Mauritius": 0, "Algeria": 0, "Lebanon": 0,
+            "China": 0, "Yemen": 0, "South Africa": 0, "Sudan": 0, "Singapore": 0, "Thailand": 0,
+            "Canada": 0, "Iran": 0, "Syria": 0, "Korea (R.OK)": 0, "Turkey": 0, "Morocco": 0,
+            "Uzbekistan": 0, "Croatia": 0, "Japan": 0, "Spain": 0, "Portugal": 0, "Switzerland": 0,
+            "Hungary": 0, "Qatar": 8, "Slovak": 0, "Russian": 8
+        };
+
+        function populateCountries() {
+            const countrySelect = document.getElementById("country");
+            countrySelect.innerHTML = '<option value="">--Select--</option>';
+            countries.forEach(country => {
+                countrySelect.innerHTML += `<option value="${country}">${country}</option>`;
+            });
+        }
+
+        function handleCategoryChange() {
+            const category = document.getElementById("category").value;
+            const natureDiv = document.getElementById("natureServicesDiv");
+            natureDiv.style.display = category === "Services" ? "block" : "none";
+            populateCountries();
+        }
+
+        function determineWHT() {
+            const category = document.getElementById("category").value;
+            const country = document.getElementById("country").value;
+            const nature = document.getElementById("natureOfServices").value;
+            const outputDiv = document.getElementById("output");
+
+            if (!category || !country) {
+                outputDiv.innerHTML = "Please select both Category and Country.";
+                return;
+            }
+
+            if (country === "Oman") {
+                outputDiv.innerHTML = "Payments to Omani vendors are not subject to WHT.";
+                return;
+            }
+
+            if (category === "Royalties") {
+                const rate = royaltyRates[country] !== undefined ? royaltyRates[country] : 10;
+                outputDiv.innerHTML = rate === 10
+                    ? "The WHT rate is 10%."
+                    : `The WHT applicable under the DTA rate is ${rate}%. To benefit from this reduced rate, the supplier is required to submit the following two documents; otherwise, the standard rate of 10% will apply:<br>
+                    1- An apostilled tax residency certificate confirming that the supplier is a tax resident of ${country} and qualifies for the DTA benefits with Oman for the year 2025.<br>
+                    2- A written declaration confirming that the supplier is the beneficial owner of the income derived from the contract with SIPC.`;
+            } else if (category === "Services") {
+                if (!nature) {
+                    outputDiv.innerHTML = "Please select the Nature of Services.";
+                    return;
+                }
+                if (nature >= 1 && nature <= 7) {
+                    outputDiv.innerHTML = "This service is exempt from WHT; therefore, no WHT applies.";
+                } else {
+                    const rate = serviceRates[country] !== undefined ? serviceRates[country] : 10;
+                    outputDiv.innerHTML = rate === 10
+                        ? "The WHT rate is 10%."
+                        : `The WHT applicable under the DTA rate is ${rate}%. To benefit from this reduced rate, the supplier is required to submit the following two documents; otherwise, the standard rate of 10% will apply:<br>
+                        1- An apostilled tax residency certificate confirming that the supplier is a tax resident of ${country} and qualifies for the DTA benefits with Oman for the year 2025.<br>
+                        2- A written declaration confirming that the supplier is the beneficial owner of the income derived from the contract with SIPC.`;
+                }
+            }
+        }
+
+        window.onload = populateCountries;
+    </script>
+</body>
+</html>
